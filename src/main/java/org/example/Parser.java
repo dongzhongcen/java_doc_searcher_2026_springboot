@@ -1,11 +1,15 @@
 package org.example;
 
 import java.io.File;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 
 public class Parser {
     private static final String INPUT_PATH="D:\\Github\\java_doc_searcher_2026\\jdk-21.0.12_doc-all\\docs\\api";
-
+    private static Index index = new Index();
 //    private static void run(){
     public static void run(){
         /*
@@ -15,13 +19,15 @@ public class Parser {
          */
         ArrayList<File> filelist = new ArrayList<>();
         enumFile(INPUT_PATH, filelist);
-        System.out.println(filelist);
-        System.out.println(filelist.size());
+        System.out.println("待解析文件数: " + filelist.size());
 
-        for(File file : filelist){
-            System.out.println("开始解析:" + file.getAbsolutePath());
+        for(int i = 0; i < filelist.size(); i++){
+            File file = filelist.get(i);
+            System.out.println("开始解析(" + (i + 1) + "/" + filelist.size() + "):" + file.getAbsolutePath());
             parseHtml(file);
         }
+
+        index.save();
     }
 
     private static void parseHtml(File file) {
@@ -29,11 +35,12 @@ public class Parser {
         1.解析html的标题
         2.解析html对应的url
         3.解析出html对应的正文
-        4.Todo 把解析出来的结果加入filelist中
+        4.把解析出来的结果加入文件index中
          */
         String title = parseTitle(file);
         String url = parseUrl(file);
         String content = parseContent(file);
+        index.addDoc(title, url, content);
     }
 
     private static String parseUrl(File file) {
@@ -49,8 +56,51 @@ public class Parser {
         return file.getName().substring(0, file.getName().length() - ".html".length());
     }
 
-    private static String parseContent(File file) {
-        return "";
+    public static String parseContent(File file) {
+        /*
+            单字符读取 > < 控制拷贝数据的开关
+            FileInputStream 按字节读取  FileReader按字符读取
+         */
+        try (BufferedReader fileReader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
+            /*
+                Boolean 作为是否拷贝的开关
+             */
+            boolean isCopy = true;
+            //存结果
+            StringBuilder content = new StringBuilder();
+
+            while(true){
+                /*
+                    使用int作为返回值, 应对非法, 如读到末尾返回-1
+                 */
+                int ret = fileReader.read();
+                if(ret == -1){
+                    break;
+                }
+                /*
+                    结果不是-1就是合理的字符
+                 */
+                char c = (char)ret;
+                if(isCopy){
+                    if (c == '<') {
+                        isCopy = false;
+                        continue;
+                    }
+                    if(c == '\n' || c == '\r'){
+                        c = ' ';
+                    }
+                    content.append(c);
+                    } else {
+                        if(c == '>'){
+                            isCopy = true;
+                        }
+                    }
+                }
+
+            return content.toString();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static void enumFile(String inputPath, ArrayList<File> filelist) {
