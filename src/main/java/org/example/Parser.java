@@ -5,13 +5,24 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Parser {
-    private static final String INPUT_PATH="D:\\Github\\java_doc_searcher_2026\\jdk-21.0.12_doc-all\\docs\\api";
+    private static final String INPUT_PATH="D:/Github/java_doc_searcher_2026/jdk-21.0.12_doc-all/docs/api";
     private static Index index = new Index();
-//    private static void run(){
-    public static void run(){
+
+    private AtomicLong t1 = new AtomicLong(0);
+    private AtomicLong t2 = new AtomicLong(0);
+
+    public void run(){
+        long beg = System.currentTimeMillis();
+        System.out.println("索引制作开始!");
         /*
             1.根据指定的路径列举出所有的文件(html), 还需要所有子目录
             2.针对罗列的文件路径, 打开文件, 读取文件内容, 并且解析, 构建索引
@@ -28,9 +39,49 @@ public class Parser {
         }
 
         index.save();
+        long end = System.currentTimeMillis();
+        System.out.println("索引制作完毕! 消耗时间" + (end - beg) + "ms");
     }
 
-    private static void parseHtml(File file) {
+    public void runByThread() throws InterruptedException {
+
+        long beg = System.currentTimeMillis();
+        System.out.println("索引制作开始!");
+
+        ArrayList<File> files = new ArrayList<>();
+        enumFile(INPUT_PATH, files);
+        CountDownLatch latch = new CountDownLatch(files.size());
+
+        ExecutorService executorService = Executors.newFixedThreadPool(4);
+        for (File file : files){
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println("解析 " + file.getAbsolutePath());
+                    parseHtml(file);
+                    latch.countDown();
+                }
+            });
+        }
+
+        //所有文件countDown后, 才会阻塞结束
+        latch.await();
+
+        //非守护线程需要手动关闭
+        executorService.shutdown();
+
+        /*
+            需要所有任务处理完毕再保存
+         */
+        index.save();
+
+        long end = System.currentTimeMillis();
+        System.out.println("索引制作完毕! 消耗时间" + (end - beg) + "ms");
+        System.out.println("t1: " + t1 + ",t2 " + t2);
+    }
+
+
+    private void parseHtml(File file) {
         /*
         1.解析html的标题
         2.解析html对应的url
@@ -39,13 +90,21 @@ public class Parser {
          */
         String title = parseTitle(file);
         String url = parseUrl(file);
+        long beg = System.nanoTime();
         String content = parseContent(file);
+        long mid = System.nanoTime();
         index.addDoc(title, url, content);
+        long end = System.nanoTime();
+
+        t1.addAndGet(mid - beg);
+        t2.addAndGet(end - mid);
     }
 
     private static String parseUrl(File file) {
-        String part1 = "https://docs.oracle.com/en/java/javase/21/docs/api";
-        String part2 = file.getAbsolutePath().substring(INPUT_PATH.length());
+        String part1 = "https://docs.oracle.com/en/java/javase/21/docs/api/";
+        Path inputPath = Paths.get(INPUT_PATH);
+        Path filePath = file.toPath();
+        String part2 = inputPath.relativize(filePath).toString().replace("\\", "/");
 
         return part1 + part2;
     }

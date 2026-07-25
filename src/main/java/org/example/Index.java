@@ -32,6 +32,9 @@ public class Index {
     private ArrayList<DocInfo> forwardIndex = new ArrayList<>();
     //使用hash来倒排 key, value
     private HashMap<String, ArrayList<Weight>> invertedIndex = new HashMap<>();
+
+    private Object locker1 = new Object();
+    private Object locker2 = new Object();
     public DocInfo getDocInfo(int docId){
         return forwardIndex.get(docId);
     }
@@ -64,61 +67,64 @@ public class Index {
 
         HashMap<String, WordCount> wordCountHashMap = new HashMap<>();
 
-        //标题分词
-        List<Term> terms = ToAnalysis.parse(docInfo.getTitle()).getTerms();
+        synchronized (locker2)
+        {
+            //标题分词
+            List<Term> terms = ToAnalysis.parse(docInfo.getTitle()).getTerms();
 
-        for(Term term : terms){
-            //判断是存在
+            for(Term term : terms){
+                //判断是存在
 //            System.out.println(term.getName());
-            String word = term.getName();
-            WordCount wordCount = wordCountHashMap.get(word);
+                String word = term.getName();
+                WordCount wordCount = wordCountHashMap.get(word);
 
-            if(wordCount == null){
-                //如果不存在就设置titleCount为1 并插入
-                WordCount newWordCount = new WordCount();
-                newWordCount.titleCount = 1;
-                newWordCount.contentCount = 0;
-                wordCountHashMap.put(word, newWordCount);
-            }else{
-                //如果存在就把之前的titleCount + 1
-                wordCount.titleCount += 1;
+                if(wordCount == null){
+                    //如果不存在就设置titleCount为1 并插入
+                    WordCount newWordCount = new WordCount();
+                    newWordCount.titleCount = 1;
+                    newWordCount.contentCount = 0;
+                    wordCountHashMap.put(word, newWordCount);
+                }else{
+                    //如果存在就把之前的titleCount + 1
+                    wordCount.titleCount += 1;
+                }
             }
-        }
 
-        terms = ToAnalysis.parse(docInfo.getContent()).getTerms();
+            terms = ToAnalysis.parse(docInfo.getContent()).getTerms();
 
-        for(Term term : terms){
-            //判断是存在
+            for(Term term : terms){
+                //判断是存在
 //            System.out.println(term.getName());
-            String word = term.getName();
-            WordCount wordCount = wordCountHashMap.get(word);
+                String word = term.getName();
+                WordCount wordCount = wordCountHashMap.get(word);
 
-            if(wordCount == null){
-                //如果不存在就设置--title--Count为1 并插入
-                WordCount newWordCount = new WordCount();
-                newWordCount.titleCount = 0;
-                newWordCount.contentCount = 1;
-                wordCountHashMap.put(word, newWordCount);
-            }else{
-                //如果存在就把之前的--title--Count + 1
-                wordCount.contentCount += 1;
+                if(wordCount == null){
+                    //如果不存在就设置--title--Count为1 并插入
+                    WordCount newWordCount = new WordCount();
+                    newWordCount.titleCount = 0;
+                    newWordCount.contentCount = 1;
+                    wordCountHashMap.put(word, newWordCount);
+                }else{
+                    //如果存在就把之前的--title--Count + 1
+                    wordCount.contentCount += 1;
+                }
             }
-        }
-        //实现汇总到HashMap Map不可遍历,所以这里转换成Set把键值对打包在一起Entry
-        for(Map.Entry<String, WordCount> entry : wordCountHashMap.entrySet()){
-            List<Weight> invertedList = invertedIndex.get(entry.getKey());
-            if(invertedList == null){
-                ArrayList<Weight> newInvertedList = new ArrayList<>();
-                Weight weight = new Weight();
-                weight.setDocId(docInfo.getDocId());
-                weight.setWeight(entry.getValue().titleCount * 10 + entry.getValue().contentCount);
-                newInvertedList.add(weight);
-                invertedIndex.put(entry.getKey(),newInvertedList);
-            }else{
-                Weight weight = new Weight();
-                weight.setDocId(docInfo.getDocId());
-                weight.setWeight(entry.getValue().titleCount * 10 + entry.getValue().contentCount);
-                invertedList.add(weight);
+            //实现汇总到HashMap Map不可遍历,所以这里转换成Set把键值对打包在一起Entry
+            for(Map.Entry<String, WordCount> entry : wordCountHashMap.entrySet()){
+                List<Weight> invertedList = invertedIndex.get(entry.getKey());
+                if(invertedList == null){
+                    ArrayList<Weight> newInvertedList = new ArrayList<>();
+                    Weight weight = new Weight();
+                    weight.setDocId(docInfo.getDocId());
+                    weight.setWeight(entry.getValue().titleCount * 10 + entry.getValue().contentCount);
+                    newInvertedList.add(weight);
+                    invertedIndex.put(entry.getKey(),newInvertedList);
+                }else{
+                    Weight weight = new Weight();
+                    weight.setDocId(docInfo.getDocId());
+                    weight.setWeight(entry.getValue().titleCount * 10 + entry.getValue().contentCount);
+                    invertedList.add(weight);
+                }
             }
         }
 
@@ -126,11 +132,14 @@ public class Index {
 
     private DocInfo buildForward(String title, String url, String content) {
         DocInfo docInfo = new DocInfo();
-        docInfo.setDocId(forwardIndex.size());
+
         docInfo.setTitle(title);
         docInfo.setUrl(url);
         docInfo.setContent(content);
-        forwardIndex.add(docInfo);
+        synchronized (locker1){
+            docInfo.setDocId(forwardIndex.size());
+            forwardIndex.add(docInfo);
+        }
         return docInfo;
     }
 
