@@ -241,7 +241,7 @@
 </head>
 <body>
 <div class="background-scene">
-    <img id="backgroundImage" src="assets/search-bg.jpg" alt="">
+    <img id="backgroundImage" src="image/search-bg.jpg" alt="">
 </div>
 
 <div class="page">
@@ -258,114 +258,6 @@
 </div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script>
-    var queryInput = document.getElementById("query");
-    var searchButton = document.getElementById("searchBtn");
-    var statusElement = document.getElementById("status");
-    var resultElement = document.getElementById("results");
-    var backgroundImage = document.getElementById("backgroundImage");
-
-    function setStatus(message) {
-        statusElement.textContent = message;
-    }
-
-    function renderResults(results) {
-        resultElement.innerHTML = "";
-        resultElement.scrollTop = 0;
-        updateBackgroundPosition();
-
-        if (!results || results.length === 0) {
-            setStatus("没有找到相关结果。");
-            var emptyDiv = document.createElement("div");
-            emptyDiv.className = "empty-text";
-            emptyDiv.textContent = "没有找到相关结果，请换一个关键词试试。";
-            resultElement.appendChild(emptyDiv);
-            return;
-        }
-
-        setStatus("共找到 " + results.length + " 条结果。");
-
-        for (var i = 0; i < results.length; i++) {
-            var item = results[i];
-            var itemDiv = document.createElement("div");
-            itemDiv.className = "result-item";
-
-            var title = document.createElement("a");
-            title.className = "result-title";
-            title.href = item.url;
-            title.target = "_blank";
-            title.textContent = item.title;
-            itemDiv.appendChild(title);
-
-            var desc = document.createElement("p");
-            desc.className = "result-desc";
-            desc.innerHTML = item.desc;
-            itemDiv.appendChild(desc);
-
-            var url = document.createElement("a");
-            url.className = "result-url";
-            url.href = item.url;
-            url.target = "_blank";
-            url.textContent = item.url;
-            itemDiv.appendChild(url);
-
-            resultElement.appendChild(itemDiv);
-        }
-    }
-
-    function search() {
-        var query = queryInput.value.trim();
-        if (query.length === 0) {
-            setStatus("请输入搜索关键词。");
-            resultElement.innerHTML = "";
-            resultElement.scrollTop = 0;
-            updateBackgroundPosition();
-            return;
-        }
-
-        searchButton.disabled = true;
-        setStatus("正在搜索...");
-        resultElement.innerHTML = "";
-        resultElement.scrollTop = 0;
-        updateBackgroundPosition();
-
-        var request = new XMLHttpRequest();
-        request.open("GET", "search?query=" + encodeURIComponent(query), true);
-        request.onreadystatechange = function () {
-            if (request.readyState !== 4) {
-                return;
-            }
-
-            searchButton.disabled = false;
-            if (request.status >= 200 && request.status < 300) {
-                var data = JSON.parse(request.responseText);
-                renderResults(data);
-            } else {
-                var message = request.responseText || "请求失败，请检查服务器是否启动。";
-                setStatus(message);
-            }
-        };
-        request.send();
-    }
-
-    function updateBackgroundPosition() {
-        var scrollRange = resultElement.scrollHeight - resultElement.clientHeight;
-        var progress = scrollRange <= 0 ? 0 : resultElement.scrollTop / scrollRange;
-        var imageHeight = backgroundImage.getBoundingClientRect().height;
-        var moveRange = imageHeight - window.innerHeight;
-        var offset = moveRange <= 0 ? 0 : -moveRange * progress;
-        backgroundImage.style.transform = "translate3d(0, " + offset + "px, 0)";
-    }
-
-    searchButton.addEventListener("click", search);
-    queryInput.addEventListener("keydown", function (event) {
-        if (event.key === "Enter") {
-            search();
-        }
-    });
-    resultElement.addEventListener("scroll", updateBackgroundPosition);
-    window.addEventListener("resize", updateBackgroundPosition);
-    backgroundImage.addEventListener("load", updateBackgroundPosition);
-</script>
+<script src="js/main.js"></script>
 </body>
 </html>

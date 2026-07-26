@@ -1,4 +1,4 @@
-package org.example.api;
+package org.example.controller;
 
 import org.example.searcher.DocSearcher;
 import org.example.searcher.Result;
@@ -17,7 +17,7 @@ public class DocSearcherController {
     @GetMapping("/search")
     public List<Result> search(@RequestParam("query") String query) {
         if (query == null || query.trim().equals("")) {
-            throw new BadRequestException("非法输入, 未获取到query值");
+            throw new BadRequestException("非法输入, 未获取到 query 值");
         }
         System.out.println("query = " + query);
         return docSearcher.search(query);

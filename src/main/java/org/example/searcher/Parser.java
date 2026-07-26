@@ -1,7 +1,5 @@
 package org.example.searcher;
 
-import org.example.config.DeployConfig;
-
 import java.io.File;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -17,7 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Parser {
-    private static final String INPUT_PATH = DeployConfig.getJdkApiPath();
+    private static final String INPUT_PATH = Config.getJdkApiPath();
     private static Index index = new Index();
 
     private AtomicLong t1 = new AtomicLong(0);

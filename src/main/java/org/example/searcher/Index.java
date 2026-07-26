@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.example.config.DeployConfig;
 import org.ansj.domain.Term;
 import org.ansj.splitWord.analysis.ToAnalysis;
 
@@ -23,8 +22,8 @@ import java.util.List;
 import java.util.Map;
 
 public class Index {
-    private static final String INDEX_PATH = DeployConfig.getIndexPath();
-    private static final String STOP_WORD_PATH = DeployConfig.getStopWordPath();
+    private static final String INDEX_PATH = Config.getIndexPath();
+    private static final String STOP_WORD_PATH = Config.getStopWordPath();
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private ObjectMapper objectMapper = new ObjectMapper();
     /*
