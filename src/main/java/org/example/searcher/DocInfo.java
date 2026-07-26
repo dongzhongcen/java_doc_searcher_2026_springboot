@@ -1,4 +1,4 @@
-package org.example;
+package org.example.searcher;
 
 public class DocInfo {
     private int docId;

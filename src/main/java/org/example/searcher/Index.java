@@ -1,23 +1,30 @@
-package org.example;
+package org.example.searcher;
 
 import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.config.DeployConfig;
 import org.ansj.domain.Term;
 import org.ansj.splitWord.analysis.ToAnalysis;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
 public class Index {
-    private static final String INDEX_PATH = "D:\\Github\\java_doc_searcher_2026\\doc_search_index\\";
+    private static final String INDEX_PATH = DeployConfig.getIndexPath();
+    private static final String STOP_WORD_PATH = DeployConfig.getStopWordPath();
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private ObjectMapper objectMapper = new ObjectMapper();
     /*
@@ -35,6 +42,12 @@ public class Index {
 
     private Object locker1 = new Object();
     private Object locker2 = new Object();
+    private HashSet<String> stopWords = new HashSet<>();
+
+    public Index() {
+        loadStopWords();
+    }
+
     public DocInfo getDocInfo(int docId){
         return forwardIndex.get(docId);
     }
@@ -76,6 +89,9 @@ public class Index {
                 //判断是存在
 //            System.out.println(term.getName());
                 String word = term.getName();
+                if (isStopWord(word)) {
+                    continue;
+                }
                 WordCount wordCount = wordCountHashMap.get(word);
 
                 if(wordCount == null){
@@ -96,6 +112,9 @@ public class Index {
                 //判断是存在
 //            System.out.println(term.getName());
                 String word = term.getName();
+                if (isStopWord(word)) {
+                    continue;
+                }
                 WordCount wordCount = wordCountHashMap.get(word);
 
                 if(wordCount == null){
@@ -191,5 +210,34 @@ public class Index {
 
     private static String now() {
         return LocalDateTime.now().format(DATE_TIME_FORMATTER);
+    }
+
+    private void loadStopWords() {
+        File stopWordFile = new File(STOP_WORD_PATH);
+        if (!stopWordFile.exists()) {
+            System.out.println(now() + " 停用词文件不存在: " + stopWordFile.getAbsolutePath());
+            return;
+        }
+
+        try (BufferedReader bufferedReader = Files.newBufferedReader(Paths.get(STOP_WORD_PATH), StandardCharsets.UTF_8)) {
+            while (true) {
+                String line = bufferedReader.readLine();
+                if (line == null) {
+                    break;
+                }
+                String word = line.trim().toLowerCase();
+                if (word.equals("") || word.startsWith("#")) {
+                    continue;
+                }
+                stopWords.add(word);
+            }
+            System.out.println(now() + " 加载停用词数量: " + stopWords.size());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private boolean isStopWord(String word) {
+        return word == null || stopWords.contains(word.toLowerCase());
     }
 }

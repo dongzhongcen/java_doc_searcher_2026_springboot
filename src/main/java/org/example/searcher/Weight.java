@@ -1,4 +1,4 @@
-package org.example;
+package org.example.searcher;
 
 /*
     文档id 和 词相关性权重

@@ -1,6 +1,11 @@
 target/
 .idea/
+.smarttomcat/
 .vscode/
+doc_search_index/*
+!doc_search_index/
+!doc_search_index/stop_word.txt
+jdk-21.0.12_doc-all/
 *.class
 *.log
 

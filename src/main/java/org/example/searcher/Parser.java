@@ -1,7 +1,10 @@
-package org.example;
+package org.example.searcher;
+
+import org.example.config.DeployConfig;
 
 import java.io.File;
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -14,7 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Parser {
-    private static final String INPUT_PATH="D:/Github/java_doc_searcher_2026/jdk-21.0.12_doc-all/docs/api";
+    private static final String INPUT_PATH = DeployConfig.getJdkApiPath();
     private static Index index = new Index();
 
     private AtomicLong t1 = new AtomicLong(0);
@@ -91,7 +94,7 @@ public class Parser {
         String title = parseTitle(file);
         String url = parseUrl(file);
         long beg = System.nanoTime();
-        String content = parseContent(file);
+        String content = parseContentRegx(file);
         long mid = System.nanoTime();
         index.addDoc(title, url, content);
         long end = System.nanoTime();
@@ -99,6 +102,39 @@ public class Parser {
         t1.addAndGet(mid - beg);
         t2.addAndGet(end - mid);
     }
+
+    private String readFile(File file){
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(file))){
+            StringBuilder content = new StringBuilder();
+            while(true){
+                int ret = bufferedReader.read();
+                if(ret == -1){
+                    break;
+                }
+                char c = (char)ret;
+                if(c == '\n' || c =='\r'){
+                    c = ' ';
+                }
+                content.append(c);
+            }
+            return content.toString();
+        }catch(IOException e){
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    public String parseContentRegx(File file){
+        /*
+            读取整个文件再创建正则
+         */
+        String content = readFile(file);
+        content = content.replaceAll("<script.*?>(.*?)</script>"," ");
+        content = content.replaceAll("<.*?>", " ");
+        content = content.replaceAll("\\s+", " ");
+        return content;
+    }
+
 
     private static String parseUrl(File file) {
         String part1 = "https://docs.oracle.com/en/java/javase/21/docs/api/";
