@@ -1,0 +1,9 @@
+.git
+.idea
+.smarttomcat
+.vscode
+target
+*.class
+*.log
+doc_search_index/forward.txt
+doc_search_index/index.txt

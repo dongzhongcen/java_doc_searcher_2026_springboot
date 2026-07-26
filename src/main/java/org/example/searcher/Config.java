@@ -7,13 +7,17 @@ public class Config {
     public static boolean isOnline = false;
 
     private static final String WINDOWS_PROJECT_ROOT = "D:/Github/java_doc_searcher_2026/java_doc_searcher";
-    private static final String LINUX_PROJECT_ROOT = "/opt/java_doc_searcher_2026/java_doc_searcher";
 
     private Config() {
     }
 
     public static String getProjectRoot() {
-        return isOnline ? LINUX_PROJECT_ROOT : WINDOWS_PROJECT_ROOT;
+        return isOnline || isOnlineEnvironment() ? System.getProperty("user.dir") : WINDOWS_PROJECT_ROOT;
+    }
+
+    private static boolean isOnlineEnvironment() {
+        String appOnline = System.getenv("APP_ONLINE");
+        return appOnline != null && appOnline.equalsIgnoreCase("true");
     }
 
     public static String getJdkApiPath() {
