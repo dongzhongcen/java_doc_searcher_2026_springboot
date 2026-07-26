@@ -11,13 +11,13 @@ import java.util.regex.Pattern;
 public class DocSearcher {
 
     private  Index index = new Index();
+    private volatile boolean loaded = false;
     /*
         输入的参数为用户给出的查询词
         输出部分为搜索结果的集合
      */
 
     public DocSearcher(){
-        index.load();
     }
     public List<Result> search(String query){
         /*
@@ -27,6 +27,7 @@ public class DocSearcher {
             4.包装结果
          */
         String word = normalizeQuery(query);
+        ensureIndexLoaded();
 
         List<List<Weight>> termResults = new ArrayList<>();
 
@@ -55,6 +56,19 @@ public class DocSearcher {
             results.add(result);
         }
         return results;
+    }
+
+    private void ensureIndexLoaded() {
+        if (loaded) {
+            return;
+        }
+        synchronized (this) {
+            if (loaded) {
+                return;
+            }
+            index.load();
+            loaded = true;
+        }
     }
 
     private String normalizeUrl(String url) {

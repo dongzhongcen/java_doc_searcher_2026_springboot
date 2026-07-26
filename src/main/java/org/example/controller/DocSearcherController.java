@@ -14,6 +14,11 @@ import java.util.List;
 public class DocSearcherController {
     private final DocSearcher docSearcher = new DocSearcher();
 
+    @GetMapping("/health")
+    public String health() {
+        return "OK";
+    }
+
     @GetMapping("/search")
     public List<Result> search(@RequestParam("query") String query) {
         if (query == null || query.trim().equals("")) {
