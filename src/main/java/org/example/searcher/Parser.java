@@ -138,7 +138,7 @@ public class Parser {
         String part1 = "https://docs.oracle.com/en/java/javase/21/docs/api/";
         Path inputPath = Paths.get(INPUT_PATH);
         Path filePath = file.toPath();
-        String part2 = inputPath.relativize(filePath).toString().replace("\\", "/");
+        String part2 = inputPath.relativize(filePath).toString().replace(File.separatorChar, '/');
 
         return part1 + part2;
     }

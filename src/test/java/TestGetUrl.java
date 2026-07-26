@@ -15,7 +15,7 @@ public class TestGetUrl {
          */
         String part1 = "https://docs.oracle.com/en/java/javase/21/docs/api/";
         Path inputPath = Paths.get(INPUT_PATH);
-        String part2 = inputPath.relativize(file.toPath()).toString().replace("\\", "/");
+        String part2 = inputPath.relativize(file.toPath()).toString().replace(File.separatorChar, '/');
         String result = part1 + part2;
 
         System.out.println(result);

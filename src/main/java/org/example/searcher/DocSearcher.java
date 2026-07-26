@@ -50,11 +50,18 @@ public class DocSearcher {
             DocInfo docInfo = index.getDocInfo(weight.getDocId());
             Result result = new Result();
             result.setTitle(docInfo.getTitle());
-            result.setUrl(docInfo.getUrl());
+            result.setUrl(normalizeUrl(docInfo.getUrl()));
             result.setDesc(GenDesc(docInfo.getContent(), word));
             results.add(result);
         }
         return results;
+    }
+
+    private String normalizeUrl(String url) {
+        if (url == null) {
+            return "";
+        }
+        return url.replace("\\", "/");
     }
 
     public static List<Weight> mergeWeightLists(List<List<Weight>> lists) {
