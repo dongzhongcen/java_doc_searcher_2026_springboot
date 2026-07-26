@@ -25,6 +25,7 @@ public class Index {
     private static final String INDEX_PATH = Config.getIndexPath();
     private static final String STOP_WORD_PATH = Config.getStopWordPath();
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final int MAX_STORED_CONTENT_LENGTH = 2000;
     private ObjectMapper objectMapper = new ObjectMapper();
     /*
         提供的方法:
@@ -62,6 +63,17 @@ public class Index {
 
         DocInfo docInfo = buildForward(title, url, content);
         buildInverted(docInfo);
+        docInfo.setContent(compactContent(content));
+    }
+
+    private String compactContent(String content) {
+        if (content == null) {
+            return "";
+        }
+        if (content.length() <= MAX_STORED_CONTENT_LENGTH) {
+            return content;
+        }
+        return content.substring(0, MAX_STORED_CONTENT_LENGTH);
     }
 
     private void buildInverted(DocInfo docInfo) {
